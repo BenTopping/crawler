@@ -1,8 +1,12 @@
 from datetime import datetime
 from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple, Union
+from csv import DictReader
 
 from bson.decimal128 import Decimal128
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Type aliases
 Sample = Dict[str, Any]  # mongo document that represents a sample
@@ -57,3 +61,19 @@ class Config(ModuleType):
     SFTP_PORT: int
     SFTP_READ_USERNAME: str
     SFTP_READ_PASSWORD: str
+
+
+class SubDictReader(DictReader):
+
+    def __init__(self, f, fieldnames=None, restkey=None, restval=None, dialect="excel", *args, **kwds):
+
+        super().__init__(f, fieldnames, restkey, restval, dialect, *args, **kwds)
+        self._fieldnames_local = fieldnames
+
+    @property
+    def fieldnames(self) -> List[str]:
+        if self._fieldnames_local is None:
+            fieldnames_sequence = super().fieldnames
+            self._fieldnames_local = list(fieldnames_sequence)
+
+        return self._fieldnames_local

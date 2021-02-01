@@ -83,7 +83,7 @@ from crawler.helpers.general_helpers import (
 )
 from crawler.helpers.logging_helpers import LoggingCollection
 from crawler.sql_queries import SQL_MLWH_MULTIPLE_INSERT
-from crawler.types import CentreConf, Config, CSVRow, ModifiedRow, ModifiedRowValue, RowSignature, Sample, SourcePlate
+from crawler.types import CentreConf, Config, CSVRow, ModifiedRow, ModifiedRowValue, RowSignature, Sample, SourcePlate, SubDictReader
 
 logger = logging.getLogger(__name__)
 
@@ -729,11 +729,14 @@ class CentreFile:
         logger.info(f"Attempting to parse CSV file: {csvfile_path}")
 
         with open(csvfile_path, newline="") as csvfile:
-            csvreader = DictReader(csvfile)
+            csvreader = SubDictReader(csvfile)
 
             try:
+                logger.warning(f"csvreader.fieldnames before remove bom {csvreader.fieldnames}")
                 self.remove_bom(csvreader)
+                logger.warning(f"csvreader.fieldnames after remove bom, before correct headers {csvreader.fieldnames}")
                 self.correct_headers(csvreader)
+                logger.warning(f"csvreader.fieldnames after correct headers {csvreader.fieldnames}")
 
                 # first check the required file headers are present
                 if self.check_for_required_headers(csvreader):
@@ -794,7 +797,7 @@ class CentreFile:
                             f"Found '{reg}' in field name '{fieldname}', "
                             f"correcting to '{self.header_regex_correction_dict[reg]}'"
                         )
-                        csvreader.fieldnames[i] = self.header_regex_correction_dict[reg]
+                        csvreader.fieldnames[i] = self.header_regex_correction_dict[reg] # Unsupported target for indexed assignment ("Sequence[str]")
 
     def check_for_required_headers(self, csvreader: DictReader) -> bool:
         """Checks that the CSV file has the required headers.
